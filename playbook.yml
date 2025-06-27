@@ -1,0 +1,37 @@
+---
+- name: Configure EC2 with Docker and Nginx
+  hosts: webserver
+  become: yes
+
+  tasks:
+    - name: Update packages
+      yum:
+        name: "*"
+        state: latest
+
+    - name: Install Docker
+      yum:
+        name: docker
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Copy custom HTML page
+      copy:
+        src: files/index.html
+        dest: /home/ec2-user/index.html
+        mode: '0644'
+
+    - name: Run Nginx container
+      community.docker.docker_container:
+        name: nginx
+        image: nginx
+        state: started
+        ports:
+          - "80:80"
+        volumes:
+          - /home/ec2-user/index.html:/usr/share/nginx/html/index.html
